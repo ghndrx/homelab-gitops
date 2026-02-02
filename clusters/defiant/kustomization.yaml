@@ -1,0 +1,12 @@
+# clusters/defiant/kustomization.yaml
+# Root Kustomization for defiant k3s cluster
+# Applied by ArgoCD or manually via: kubectl apply -k clusters/defiant/
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: argocd
+
+resources:
+  - argocd-namespace.yaml
+  - root-applicationset.yaml
+  - projects.yaml

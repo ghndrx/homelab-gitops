@@ -1,0 +1,31 @@
+# .sops.yaml
+# SOPS configuration for encrypting Kubernetes secrets
+# Generate age key: age-keygen -o key.txt
+# Export: export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
+# Encrypt: sops -e -i secret.yaml
+# Decrypt: sops -d secret.yaml
+#
+# Reference: https://github.com/getsops/sops
+
+creation_rules:
+  # Infrastructure secrets (networking, storage, monitoring)
+  - path_regex: infrastructure/.*/.*secret.*\.yaml$
+    encrypted_regex: ^(data|stringData)$
+    age: >-
+      age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+  # Application secrets
+  - path_regex: apps/.*/.*secret.*\.yaml$
+    encrypted_regex: ^(data|stringData)$
+    age: >-
+      age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+  # Cluster-specific secrets
+  - path_regex: clusters/.*/.*secret.*\.yaml$
+    encrypted_regex: ^(data|stringData)$
+    age: >-
+      age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# NOTE: Replace the age public key above with your actual key
+# The encrypted_regex ensures only data/stringData fields are encrypted,
+# leaving metadata readable for GitOps tooling

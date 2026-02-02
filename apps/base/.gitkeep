@@ -1,0 +1,2 @@
+# Base manifests for applications
+# Use Kustomize bases here, overlays in apps/overlays/{env}/

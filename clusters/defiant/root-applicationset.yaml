@@ -1,0 +1,96 @@
+# clusters/defiant/root-applicationset.yaml
+# Root ApplicationSet using Git Directory Generator
+# Automatically creates ArgoCD Applications for each component in infrastructure/
+# Reference: https://argo-cd.readthedocs.io/en/latest/operator-manual/applicationset/Generators-Git/
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: infrastructure
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/ghndrx/homelab-gitops.git
+        revision: HEAD
+        directories:
+          - path: infrastructure/*
+  template:
+    metadata:
+      name: '{{ .path.basename }}'
+      namespace: argocd
+      labels:
+        app.kubernetes.io/part-of: homelab-infrastructure
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: infrastructure
+      source:
+        repoURL: https://github.com/ghndrx/homelab-gitops.git
+        targetRevision: HEAD
+        path: '{{ .path.path }}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{ .path.basename }}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+          allowEmpty: false
+        syncOptions:
+          - CreateNamespace=true
+          - PrunePropagationPolicy=foreground
+          - PruneLast=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apps
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/ghndrx/homelab-gitops.git
+        revision: HEAD
+        directories:
+          - path: apps/overlays/prod/*
+  template:
+    metadata:
+      name: 'prod-{{ .path.basename }}'
+      namespace: argocd
+      labels:
+        app.kubernetes.io/part-of: homelab-apps
+        environment: prod
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: apps
+      source:
+        repoURL: https://github.com/ghndrx/homelab-gitops.git
+        targetRevision: HEAD
+        path: '{{ .path.path }}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'prod-{{ .path.basename }}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+        retry:
+          limit: 3
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 1m

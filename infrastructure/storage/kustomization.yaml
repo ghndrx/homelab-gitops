@@ -1,0 +1,10 @@
+# infrastructure/storage/kustomization.yaml
+# Storage: NFS provisioner, PVC templates
+# TODO: Add NFS StorageClass pointing to TrueNAS
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources: []
+# Future additions:
+# - nfs-storageclass.yaml
+# - default-pvc-templates.yaml

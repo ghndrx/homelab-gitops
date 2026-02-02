@@ -1,10 +1,20 @@
 # Homelab GitOps
 
 ![Kubernetes](https://img.shields.io/badge/k3s-1.28+-326CE5?style=flat&logo=kubernetes&logoColor=white)
-![ArgoCD](https://img.shields.io/badge/GitOps-Ready-EF7B4D?style=flat&logo=argo&logoColor=white)
+![ArgoCD](https://img.shields.io/badge/ArgoCD-2.10+-EF7B4D?style=flat&logo=argo&logoColor=white)
+![SOPS](https://img.shields.io/badge/SOPS-age-green?style=flat)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
-GitOps repository for homelab Kubernetes infrastructure. Everything as code.
+GitOps repository for homelab Kubernetes infrastructure. Everything as code, auto-synced by ArgoCD.
+
+## Quick Start
+
+```bash
+# Bootstrap cluster (after ArgoCD installed)
+kubectl apply -k clusters/defiant/
+```
+
+See [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md) for full setup guide.
 
 ## Infrastructure
 
@@ -17,16 +27,32 @@ GitOps repository for homelab Kubernetes infrastructure. Everything as code.
 ## Structure
 
 ```
-├── apps/                 # Application deployments
-│   ├── base/            # Base manifests
-│   └── overlays/        # Environment overrides
-├── infrastructure/      # Cluster infrastructure
-│   ├── networking/      # Ingress, certs, DNS
-│   ├── storage/         # NFS, PVCs
-│   └── monitoring/      # Prometheus, Grafana
-└── clusters/
-    └── defiant/         # k3s cluster config
+├── apps/                    # Application deployments
+│   ├── base/               # Base manifests (Kustomize)
+│   └── overlays/           # Environment overrides
+│       ├── prod/           # → Auto-discovered by ApplicationSet
+│       └── dev/
+├── infrastructure/          # Cluster infrastructure
+│   ├── cert-manager/       # ✅ TLS with Let's Encrypt
+│   ├── networking/         # Istio gateway, NetworkPolicies
+│   ├── storage/            # NFS StorageClass
+│   └── monitoring/         # Prometheus, Grafana, Loki
+├── clusters/
+│   └── defiant/            # Cluster bootstrap
+│       ├── kustomization.yaml
+│       ├── root-applicationset.yaml  # Git Directory Generator
+│       └── projects.yaml   # ArgoCD AppProjects
+└── docs/
+    └── BOOTSTRAP.md        # Setup guide
 ```
+
+## GitOps Pattern
+
+Uses **ArgoCD ApplicationSets** with Git Directory Generator:
+
+- `infrastructure/*` → Auto-creates ArgoCD Applications
+- `apps/overlays/prod/*` → Auto-creates prod Applications
+- Add a directory, push, ArgoCD syncs automatically
 
 ## Defiant (k3s) Workloads
 
@@ -43,9 +69,17 @@ GitOps repository for homelab Kubernetes infrastructure. Everything as code.
 - 🏠 Home Assistant
 - 📊 Homepage, Uptime Kuma
 
-## Secrets
+## Secrets Management
 
-Encrypted with SOPS + age. Never committed in plain text.
+Encrypted with **SOPS + age**. Configuration in `.sops.yaml`.
+
+```bash
+# Encrypt a secret
+sops -e -i infrastructure/cert-manager/secret.yaml
+
+# Decrypt for editing
+sops infrastructure/cert-manager/secret.yaml
+```
 
 ## License
 

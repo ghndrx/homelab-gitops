@@ -1,0 +1,13 @@
+# infrastructure/monitoring/kustomization.yaml
+# Monitoring: Prometheus, Grafana, Alertmanager
+# TODO: Add kube-prometheus-stack helm chart
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: monitoring
+
+resources: []
+# Future additions via helmCharts:
+# - kube-prometheus-stack
+# - loki
+# - grafana dashboards

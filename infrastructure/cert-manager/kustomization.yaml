@@ -1,0 +1,48 @@
+# infrastructure/cert-manager/kustomization.yaml
+# Cert-Manager with Let's Encrypt ClusterIssuers
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: cert-manager
+
+resources:
+  - namespace.yaml
+  - clusterissuers.yaml
+
+helmCharts:
+  - name: cert-manager
+    repo: https://charts.jetstack.io
+    version: v1.14.4
+    releaseName: cert-manager
+    namespace: cert-manager
+    valuesInline:
+      installCRDs: true
+      replicaCount: 1
+      # Pod Security Standards compliance
+      podSecurityPolicy:
+        enabled: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containerSecurityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        readOnlyRootFilesystem: true
+      webhook:
+        securityContext:
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+      cainjector:
+        securityContext:
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+      # Prometheus ServiceMonitor
+      prometheus:
+        enabled: true
+        servicemonitor:
+          enabled: true

@@ -1,0 +1,2 @@
+# Production overlay directory
+# Each subdirectory here becomes an ArgoCD Application via ApplicationSet

@@ -1,0 +1,12 @@
+# clusters/defiant/argocd-namespace.yaml
+# ArgoCD namespace with required labels
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+  labels:
+    app.kubernetes.io/name: argocd
+    app.kubernetes.io/part-of: argocd
+    # Pod Security Standards - privileged for ArgoCD repo-server
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/warn: restricted

@@ -1,0 +1,49 @@
+# clusters/defiant/projects.yaml
+# ArgoCD AppProjects for access control and grouping
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: infrastructure
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Core cluster infrastructure (networking, storage, monitoring)
+  sourceRepos:
+    - 'https://github.com/ghndrx/homelab-gitops.git'
+    - 'https://charts.jetstack.io'
+    - 'https://prometheus-community.github.io/helm-charts'
+    - 'https://grafana.github.io/helm-charts'
+  destinations:
+    - namespace: '*'
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: apps
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: User-facing applications
+  sourceRepos:
+    - 'https://github.com/ghndrx/homelab-gitops.git'
+  destinations:
+    - namespace: 'prod-*'
+      server: https://kubernetes.default.svc
+    - namespace: 'dev-*'
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
