@@ -1,0 +1,68 @@
+# infrastructure/kyverno/policies/add-default-securitycontext.yaml
+# Mutating policy: adds secure defaults to pods missing securityContext
+# Implements defense-in-depth by setting secure defaults
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-default-securitycontext
+  annotations:
+    policies.kyverno.io/title: Add Default Security Context
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Mutating policy that adds secure default securityContext to pods
+      that don't specify one. Reduces attack surface by dropping
+      capabilities and making filesystem read-only where possible.
+    pod-policies.kyverno.io/autogen-controllers: DaemonSet,Deployment,Job,StatefulSet,ReplicaSet
+spec:
+  # Mutate rules apply during admission
+  rules:
+    - name: add-pod-security-context
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - istio-system
+      mutate:
+        patchStrategicMerge:
+          spec:
+            # Add pod-level securityContext if missing
+            +(securityContext):
+              seccompProfile:
+                type: RuntimeDefault
+              # Don't allow privilege escalation by default
+              runAsNonRoot: true
+    - name: add-container-security-context
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - istio-system
+      mutate:
+        foreach:
+          - list: "request.object.spec.containers"
+            patchStrategicMerge:
+              spec:
+                containers:
+                  - name: "{{ element.name }}"
+                    +(securityContext):
+                      allowPrivilegeEscalation: false
+                      capabilities:
+                        drop:
+                          - ALL
+                      readOnlyRootFilesystem: true

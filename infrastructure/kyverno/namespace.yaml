@@ -1,0 +1,10 @@
+# infrastructure/kyverno/namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kyverno
+  labels:
+    app.kubernetes.io/name: kyverno
+    app.kubernetes.io/component: policy-engine
+    # Exempt from Pod Security Standards (Kyverno needs privileges)
+    pod-security.kubernetes.io/enforce: privileged

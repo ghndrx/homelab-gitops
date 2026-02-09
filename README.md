@@ -34,6 +34,7 @@ See [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md) for full setup guide.
 │       └── dev/
 ├── infrastructure/          # Cluster infrastructure
 │   ├── cert-manager/       # ✅ TLS with Let's Encrypt
+│   ├── kyverno/            # ✅ Policy engine (security + best practices)
 │   ├── networking/         # Istio gateway, NetworkPolicies
 │   ├── storage/            # NFS StorageClass
 │   └── monitoring/         # Prometheus, Grafana, Loki
@@ -68,6 +69,27 @@ Uses **ArgoCD ApplicationSets** with Git Directory Generator:
 - 📷 Immich
 - 🏠 Home Assistant
 - 📊 Homepage, Uptime Kuma
+
+## Policy Engine (Kyverno)
+
+Kyverno enforces security and best practices across the cluster. Policies include:
+
+| Policy | Mode | Description |
+|--------|------|-------------|
+| `disallow-privileged` | Enforce | Blocks privileged containers |
+| `require-resource-limits` | Enforce | Requires CPU/memory limits |
+| `require-labels` | Audit | Standard labeling for workloads |
+| `require-non-root` | Audit | Non-root container requirement |
+| `disallow-latest-tag` | Enforce | Requires explicit image tags |
+| `add-default-securitycontext` | Mutate | Adds secure defaults automatically |
+
+Policies in **Audit** mode generate reports without blocking. Promote to **Enforce** after validating existing workloads.
+
+```bash
+# Check policy reports
+kubectl get policyreports -A
+kubectl get clusterpolicyreports
+```
 
 ## Secrets Management
 

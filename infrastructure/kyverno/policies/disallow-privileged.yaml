@@ -1,0 +1,47 @@
+# infrastructure/kyverno/policies/disallow-privileged.yaml
+# Prevents pods from running as privileged containers
+# Security baseline: CIS Benchmark 5.2.1
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-privileged-containers
+  annotations:
+    policies.kyverno.io/title: Disallow Privileged Containers
+    policies.kyverno.io/category: Pod Security Standards (Baseline)
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Privileged containers have all Linux capabilities and can access
+      host resources. This policy prevents privileged containers from
+      being created except in system namespaces.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: privileged-containers
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - istio-system
+                - cert-manager
+      validate:
+        message: "Privileged containers are not allowed. Set securityContext.privileged to false."
+        pattern:
+          spec:
+            containers:
+              - securityContext:
+                  privileged: "false"
+            =(initContainers):
+              - securityContext:
+                  privileged: "false"
+            =(ephemeralContainers):
+              - securityContext:
+                  privileged: "false"

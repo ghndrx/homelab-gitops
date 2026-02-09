@@ -1,0 +1,60 @@
+# infrastructure/kyverno/policies/disallow-latest-tag.yaml
+# Prevents use of 'latest' image tag for reproducibility
+# GitOps best practice: always use explicit image versions
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/title: Disallow Latest Tag
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      The 'latest' tag is mutable and can change unexpectedly, making
+      deployments non-reproducible. This policy requires explicit
+      image tags for GitOps traceability.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-image-tag
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+      validate:
+        message: "Images must use an explicit tag (not 'latest'). Specify a version tag like ':v1.2.3' or SHA digest."
+        pattern:
+          spec:
+            containers:
+              - image: "*:*"
+            =(initContainers):
+              - image: "*:*"
+    - name: validate-not-latest
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+      validate:
+        message: "The 'latest' tag is not allowed. Use a specific version tag."
+        pattern:
+          spec:
+            containers:
+              - image: "!*:latest"
+            =(initContainers):
+              - image: "!*:latest"
